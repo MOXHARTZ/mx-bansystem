@@ -12,7 +12,6 @@ function Identifier(player)
     end
     return ''
 end
-
 RegisterNetEvent('mx-serverman:Ban')
 AddEventHandler('mx-serverman:Ban', function (admin, id, reason, time)
     local ReasonX = {}
@@ -53,14 +52,21 @@ AddEventHandler('mx-serverman:Ban', function (admin, id, reason, time)
             ['@re'] = table.concat(ReasonX, ' '),
             ['@t'] = os.time() + time
         }
-        MySQL.Sync.execute(insert, inserData)
+        Execute(insert, inserData)
         DropPlayer(id, 'You have been banned by the management bot. Reason: '..table.concat(ReasonX, ' ')..' When the ban will open: '..os.date('%d.%m.%Y %H:%M', os.time() + time))
     else
-        local fetch = [[SELECT identifier FROM users WHERE identifier = @id;]]
-        local fetchData = {['@id'] = id}
-        local result = MySQL.Sync.fetchAll(fetch, fetchData)
+        local fetch, fetchData, result
+        if Config.useQB then
+            fetch = [[SELECT license FROM players WHERE license = ?;]]
+            fetchData = {id}
+            result = FetchAll(fetch, fetchData)
+        else
+            fetch = [[SELECT identifier FROM users WHERE identifier = @id;]]
+            fetchData = {['@id'] = id}
+            result = FetchAll(fetch, fetchData)
+        end
         if result and result[1] then
-            MySQL.Sync.execute('INSERT INTO bannedplayers (identifier, reason, time, admin) VALUES (@identifier, @reason, @time, @admin)', {
+            Execute('INSERT INTO bannedplayers (identifier, reason, time, admin) VALUES (@identifier, @reason, @time, @admin)', {
                 ['@identifier'] = id,
                 ['@reason'] = table.concat(ReasonX, ' '),
                 ['@time'] = os.time() + time,
@@ -87,7 +93,6 @@ AddEventHandler('mx-serverman:Ban', function (admin, id, reason, time)
         end
     end
 end)
-
 IsAdmin = function (player)
      for _,v in pairs(Config.AdminGroups) do
           if player.getGroup() == v then
@@ -96,7 +101,6 @@ IsAdmin = function (player)
      end
      return false
 end
-
 Ban = function(source, target, time, reason)
     if source == 0 then
         if GetPlayerName(target) then
@@ -117,14 +121,14 @@ Ban = function(source, target, time, reason)
                 ['@re'] = reason,
                 ['@t'] = os.time() + time
             }
-            MySQL.Sync.execute(insert, inserData)
+            Execute(insert, inserData)
             DropPlayer(target, 'You have been banned by the management bot. Reason: '..reason..' When the ban will open: '..os.date('%d.%m.%Y %H:%M', os.time() + time))
         else
             local fetch = [[SELECT identifier FROM users WHERE identifier = @id;]]
             local fetchData = {['@id'] = target}
-            local result = MySQL.Sync.fetchAll(fetch, fetchData)
+            local result = FetchAll(fetch, fetchData)
             if result and result[1] then
-                MySQL.Sync.execute('INSERT INTO bannedplayers (identifier, reason, time, admin) VALUES (@identifier, @reason, @time, @admin)', {
+                Execute('INSERT INTO bannedplayers (identifier, reason, time, admin) VALUES (@identifier, @reason, @time, @admin)', {
                     ['@identifier'] = target,
                     ['@reason'] = reason,
                     ['@time'] = os.time() + time,
@@ -153,14 +157,14 @@ Ban = function(source, target, time, reason)
                 ['@re'] = reason,
                 ['@t'] = os.time() + time
             }
-            MySQL.Sync.execute(insert, inserData)
+            Execute(insert, inserData)
             DropPlayer(target, 'You have been banned by the management bot. Reason: '..reason..' When the ban will open: '..os.date('%d.%m.%Y %H:%M', os.time() + time))
         else
             local fetch = [[SELECT identifier FROM users WHERE identifier = @id;]]
             local fetchData = {['@id'] = target}
-            local result = MySQL.Sync.fetchAll(fetch, fetchData)
+            local result = FetchAll(fetch, fetchData)
             if result and result[1] then
-                MySQL.Sync.execute('INSERT INTO bannedplayers (identifier, reason, time, admin) VALUES (@identifier, @reason, @time, @admin)', {
+                Execute('INSERT INTO bannedplayers (identifier, reason, time, admin) VALUES (@identifier, @reason, @time, @admin)', {
                     ['@identifier'] = target,
                     ['@reason'] = reason,
                     ['@time'] = os.time() + time,
@@ -176,7 +180,6 @@ Ban = function(source, target, time, reason)
         end
     end
 end
-
 RegisterCommand('kick', function (source, args)
     if source == 0 then
         if args[1] and args[2] then
@@ -195,24 +198,41 @@ RegisterCommand('kick', function (source, args)
     else
         if args[1] and args[2] then
             if GetPlayerName(args[1]) then
-                TriggerEvent('esx:getSharedObject', function(ESX) 
-                    local xPlayer = ESX.GetPlayerFromId(source)
-                    if xPlayer then
-                         if IsAdmin(xPlayer) then
-                              local reason = {}
-                              for i = 2, #args do
-                                   table.insert(reason, args[i])
-                              end
-                              DropPlayer(args[1], table.concat(reason, ' '))
-                         else
-                              TriggerClientEvent('chat:addMessage', source, {
-                                   color = { 255, 0, 0},
-                                   multiline = true,
-                                   args = {"Me", "You Are Not Admin !"}
-                              })  
-                         end  
+                local QBCore = exports['qb-core']:GetCoreObject()
+                if Config.useQB then
+                    if QBCore.Functions.HasPermission(args[1], "admin") then
+                        local reason = {}
+                        for i = 2, #args do
+                             table.insert(reason, args[i])
+                        end
+                        DropPlayer(args[1], table.concat(reason, ' '))
+                    else
+                        TriggerClientEvent('chat:addMessage', source, {
+                            color = { 255, 0, 0},
+                            multiline = true,
+                            args = {"Me", "You Are Not Admin !"}
+                       })  
                     end
-                end)
+                else
+                    TriggerEvent('esx:getSharedObject', function(ESX) 
+                        local xPlayer = ESX.GetPlayerFromId(source)
+                        if xPlayer then
+                             if IsAdmin(xPlayer) then
+                                  local reason = {}
+                                  for i = 2, #args do
+                                       table.insert(reason, args[i])
+                                  end
+                                  DropPlayer(args[1], table.concat(reason, ' '))
+                             else
+                                  TriggerClientEvent('chat:addMessage', source, {
+                                       color = { 255, 0, 0},
+                                       multiline = true,
+                                       args = {"Me", "You Are Not Admin !"}
+                                  })  
+                             end  
+                        end
+                    end)
+                end
             else
                 TriggerClientEvent('chat:addMessage', source, {
                      color = { 255, 0, 0},
@@ -229,7 +249,6 @@ RegisterCommand('kick', function (source, args)
         end
     end
 end)
-
 RegisterNetEvent('mx-serverman:Kick')
 AddEventHandler('mx-serverman:Kick', function (admin, id, reason)
     local playername = GetPlayerName(id)
@@ -258,14 +277,13 @@ AddEventHandler('mx-serverman:Kick', function (admin, id, reason)
         TriggerEvent('mx-serverman:SendEmbed', embed)
     end
 end)
-
 RegisterNetEvent('mx-serverman:Unban')
 AddEventHandler('mx-serverman:Unban', function (id)
     local fetch = [[SELECT identifier FROM bannedplayers WHERE identifier = @id LIMIT 1;]]
     local fetchData = {['@id'] = id}
-    local result = MySQL.Sync.fetchAll(fetch, fetchData)
+    local result = FetchAll(fetch, fetchData)
     if result and result[1] then
-        MySQL.Sync.execute('DELETE FROM bannedplayers WHERE identifier = @identifier', {['@identifier'] = id})
+        Execute('DELETE FROM bannedplayers WHERE identifier = @identifier', {['@identifier'] = id})
         local embed = {
             title = id..' `Ban Removed`',
             color = "#0094ff",
@@ -281,7 +299,6 @@ AddEventHandler('mx-serverman:Unban', function (id)
         TriggerEvent('mx-serverman:SendEmbed', embed)
     end
 end)
-
 RegisterCommand('ban', function (source, args)
     if source == 0 then
         if args[1] and args[2] and tonumber(args[2]) and args[3] then
@@ -295,24 +312,41 @@ RegisterCommand('ban', function (source, args)
        end
     else
         if args[1] and args[2] and tonumber(args[2]) and args[3] then
-            TriggerEvent('esx:getSharedObject', function(ESX) 
-                local xPlayer = ESX.GetPlayerFromId(source)
-                if xPlayer then
-                     if IsAdmin(xPlayer) then
-                          local reason = {}
-                          for i = 3, #args do
-                               table.insert(reason, args[i])
-                          end
-                          Ban(source, args[1], tonumber(args[2]), table.concat(reason, ' '))
-                     else
-                          TriggerClientEvent('chat:addMessage', source, {
-                               color = { 255, 0, 0},
-                               multiline = true,
-                               args = {"Me", "You Are Not Admin !"}
-                          })  
-                     end               
+            local QBCore = exports['qb-core']:GetCoreObject()
+            if Config.useQB then
+                if QBCore.Functions.HasPermission(args[1], "admin") then
+                    local reason = {}
+                    for i = 3, #args do
+                         table.insert(reason, args[i])
+                    end
+                    Ban(source, args[1], tonumber(args[2]), table.concat(reason, ' '))
+                else
+                    TriggerClientEvent('chat:addMessage', source, {
+                        color = { 255, 0, 0},
+                        multiline = true,
+                        args = {"Me", "You Are Not Admin !"}
+                   }) 
                 end
-            end)
+            else
+                TriggerEvent('esx:getSharedObject', function(ESX) 
+                    local xPlayer = ESX.GetPlayerFromId(source)
+                    if xPlayer then
+                         if IsAdmin(xPlayer) then
+                              local reason = {}
+                              for i = 3, #args do
+                                   table.insert(reason, args[i])
+                              end
+                              Ban(source, args[1], tonumber(args[2]), table.concat(reason, ' '))
+                         else
+                              TriggerClientEvent('chat:addMessage', source, {
+                                   color = { 255, 0, 0},
+                                   multiline = true,
+                                   args = {"Me", "You Are Not Admin !"}
+                              })  
+                         end               
+                    end
+                end)
+            end
        else
             TriggerClientEvent('chat:addMessage', source, {
                  color = { 255, 0, 0},
@@ -322,8 +356,6 @@ RegisterCommand('ban', function (source, args)
        end
     end
 end)
-
-
 function GetIdentifiers(id)
     local license, steam, liveid, xblid, discord, ipadress
     for _,v in ipairs(GetPlayerIdentifiers(id)) do
@@ -350,15 +382,11 @@ function GetIdentifiers(id)
         ipadress
     }
 end
-
 AddEventHandler('playerConnecting', function(name, setCallback, deferrals) 
     local src = source
     local license, steam, liveid, xblid, discord, playerip = table.unpack(GetIdentifiers(src))
     deferrals.defer()
     deferrals.update('Checking Ban List')
-
-    print(Identifier(src))
-    
     local fetch = [[SELECT * FROM bannedplayers WHERE identifier = @i OR rockstar = @r OR steam = @s OR ip = @ip;]]
     local fetchData = {
         ['@i'] = Identifier(src),
@@ -366,16 +394,31 @@ AddEventHandler('playerConnecting', function(name, setCallback, deferrals)
         ['@s'] = steam,
         ['@ip'] = playerip
     }
-    local result = MySQL.Sync.fetchAll(fetch, fetchData)
+    local result = FetchAll(fetch, fetchData)
     if result and result[1] then
         if result[1].time > os.time() then
             deferrals.done('You have been banned from this server. \n Reason: '..result[1].reason..'\n The date the ban will end: '..os.date('%d.%m.%Y %H:%M', result[1].time))
             return
         else
-            MySQL.Sync.execute('DELETE FROM bannedplayers WHERE identifier = @identifier', {['@identifier'] = result[1].identifier})
+            Execute('DELETE FROM bannedplayers WHERE identifier = @identifier', {['@identifier'] = result[1].identifier})
             deferrals.done()
         end
     else
         deferrals.done()
     end
 end)
+
+function FetchAll(query, params)
+    if Config.useQB then
+        return exports.oxmysql:fetchSync(query, params)
+    else
+        return MySQL.Sync.fetchAll(query, params)
+    end
+end
+function Execute(query, params)
+    if Config.useQB then
+        return exports.oxmysql:executeSync(query, params)
+    else
+        return MySQL.Sync.execute(query, params)
+    end
+end

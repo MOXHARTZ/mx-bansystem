@@ -1,10 +1,11 @@
 Config = {
-     Admins = { -- if not used esx set here admins.
+     Admins = { -- if not used esx set here admins. ONLY ESX
           'steam:12323'
      },
-     AdminGroups = {
+     AdminGroups = { -- Only ESX
           'superadmin',
           'admin'
      },
-     Identifier = 'license'
+     Identifier = 'license',
+     useQB = true
 }
