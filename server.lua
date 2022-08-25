@@ -12,8 +12,8 @@ function Identifier(player)
     end
     return ''
 end
-RegisterNetEvent('mx-serverman:Ban')
-AddEventHandler('mx-serverman:Ban', function (admin, id, reason, time)
+RegisterNetEvent('mx-bot:Ban')
+AddEventHandler('mx-bot:Ban', function (admin, id, reason, time)
     local ReasonX = {}
     for i = 4, #reason do
          table.insert(ReasonX, reason[i])
@@ -34,7 +34,7 @@ AddEventHandler('mx-serverman:Ban', function (admin, id, reason, time)
             color = "#0094ff", -- blue
             author = 'SUCCESS'
         }
-        TriggerEvent('mx-serverman:SendEmbed', embed)
+        TriggerEvent('mx-bot:SendEmbed', embed)
         local insert = [[INSERT INTO bannedplayers
         (identifier, name, admin, steam, rockstar, xbox, live, discord, ip, reason, time) 
         VALUES
@@ -82,14 +82,14 @@ AddEventHandler('mx-serverman:Ban', function (admin, id, reason, time)
                 color = "#0094ff", -- blue
                 author = 'SUCCESS'
             }
-            TriggerEvent('mx-serverman:SendEmbed', embed)
+            TriggerEvent('mx-bot:SendEmbed', embed)
         else
             local embed = {
                 description = "Not finded identifier / id",
                 color = "#ff0000",
                 author = 'WARNING'
             }
-            TriggerEvent('mx-serverman:SendEmbed', embed)
+            TriggerEvent('mx-bot:SendEmbed', embed)
         end
     end
 end)
@@ -249,8 +249,8 @@ RegisterCommand('kick', function (source, args)
         end
     end
 end)
-RegisterNetEvent('mx-serverman:Kick')
-AddEventHandler('mx-serverman:Kick', function (admin, id, reason)
+RegisterNetEvent('mx-bot:Kick')
+AddEventHandler('mx-bot:Kick', function (admin, id, reason)
     local playername = GetPlayerName(id)
     local ReasonX = {}
     for i = 3, #reason do
@@ -267,18 +267,18 @@ AddEventHandler('mx-serverman:Kick', function (admin, id, reason)
             color = "#0094ff", -- blue
             author = 'SUCCESS'
         }
-        TriggerEvent('mx-serverman:SendEmbed', embed)
+        TriggerEvent('mx-bot:SendEmbed', embed)
     else
         local embed = {
             description = "Not finded id",
             color = "#ff0000",
             author = 'WARNING'
         }
-        TriggerEvent('mx-serverman:SendEmbed', embed)
+        TriggerEvent('mx-bot:SendEmbed', embed)
     end
 end)
-RegisterNetEvent('mx-serverman:Unban')
-AddEventHandler('mx-serverman:Unban', function (id)
+RegisterNetEvent('mx-bot:Unban')
+AddEventHandler('mx-bot:Unban', function (id)
     local fetch = [[SELECT identifier FROM bannedplayers WHERE identifier = @id LIMIT 1;]]
     local fetchData = {['@id'] = id}
     local result = FetchAll(fetch, fetchData)
@@ -289,14 +289,14 @@ AddEventHandler('mx-serverman:Unban', function (id)
             color = "#0094ff",
             author = 'SUCCESS'
         }
-        TriggerEvent('mx-serverman:SendEmbed', embed)
+        TriggerEvent('mx-bot:SendEmbed', embed)
     else
         local embed = {
             description = "Player is not banned",
             color = "#ff0000",
             author = 'WARNING'
         }
-        TriggerEvent('mx-serverman:SendEmbed', embed)
+        TriggerEvent('mx-bot:SendEmbed', embed)
     end
 end)
 RegisterCommand('ban', function (source, args)
