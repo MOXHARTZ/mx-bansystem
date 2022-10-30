@@ -198,8 +198,8 @@ RegisterCommand('kick', function (source, args)
     else
         if args[1] and args[2] then
             if GetPlayerName(args[1]) then
-                local QBCore = exports['qb-core']:GetCoreObject()
                 if Config.useQB then
+                    local QBCore = exports['qb-core']:GetCoreObject()
                     if QBCore.Functions.HasPermission(args[1], "admin") then
                         local reason = {}
                         for i = 2, #args do
@@ -312,8 +312,8 @@ RegisterCommand('ban', function (source, args)
        end
     else
         if args[1] and args[2] and tonumber(args[2]) and args[3] then
-            local QBCore = exports['qb-core']:GetCoreObject()
             if Config.useQB then
+                local QBCore = exports['qb-core']:GetCoreObject()
                 if QBCore.Functions.HasPermission(args[1], "admin") then
                     local reason = {}
                     for i = 3, #args do
